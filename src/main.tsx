@@ -217,6 +217,8 @@ if (isBrowserDirectMode) {
         
         const offlineIncidents = getLocalState("offline_incidents", []);
         const idx = offlineIncidents.findIndex((inc: any) => inc.id === id);
+        const originalIncident = idx !== -1 ? { ...offlineIncidents[idx] } : null;
+        
         if (idx !== -1) {
           if (body.status !== undefined) offlineIncidents[idx].status = body.status;
           if (body.correctiveAction !== undefined) offlineIncidents[idx].correctiveAction = body.correctiveAction;
@@ -229,6 +231,55 @@ if (isBrowserDirectMode) {
         }
         
         const updatedObj = offlineIncidents[idx] || { id, ...body };
+        
+        // ----------------- TELEGRAM DISPATCH ON UPDATE -----------------
+        const settings = getLocalState("offline_settings", {
+          telegramEnabled: false,
+          telegramBotToken: "",
+          telegramChatId: ""
+        });
+        
+        if (settings.telegramEnabled && settings.telegramBotToken && settings.telegramChatId) {
+          const reporter = originalIncident?.employeeName || updatedObj.employeeName || "غير معروف";
+          const desc = originalIncident?.description || updatedObj.description || "";
+          
+          let alertMsg = `🔄 <b>تم تحديث بلاغ/حادث رقم:</b> ${id}\n`;
+          alertMsg += `<b>المبلغ:</b> ${reporter}\n`;
+          alertMsg += `<b>الوصف الأصلي:</b> ${desc}\n\n`;
+          
+          if (body.status !== undefined) {
+            let statusAr = body.status;
+            if (body.status === "Open") statusAr = "مفتوح 🔴";
+            if (body.status === "In Progress") statusAr = "قيد المعالجة 🟡";
+            if (body.status === "Closed") statusAr = "مغلق 🟢";
+            alertMsg += `<b>الحالة الجديدة:</b> ${statusAr}\n`;
+          }
+          if (body.correctiveAction !== undefined) {
+            alertMsg += `<b>الإجراء التصحيحي المضاف:</b> ${body.correctiveAction}\n`;
+          }
+          
+          const filesToNotify = finalFiles || (body.files && Array.isArray(body.files) ? body.files.map((f: any) => f.name).join(", ") : "");
+          if (filesToNotify) {
+            const urls = filesToNotify.split(",").map((f: string) => f.trim()).filter((u: string) => u.startsWith("http"));
+            if (urls.length > 0) {
+              alertMsg += `\n🖼️ <b>معاينة المرفقات والصور المضافة:</b>\n` + urls.map((url, idx) => `🔗 <a href="${url}">رابط الصورة #${idx + 1}</a>\n${url}`).join("\n");
+            } else {
+              alertMsg += `\n📁 <b>الملفات المرفقة المضافة:</b> ${filesToNotify}`;
+            }
+          }
+          
+          originalFetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: settings.telegramChatId,
+              text: alertMsg,
+              parse_mode: "HTML"
+            })
+          }).catch(tgErr => console.error("Telegram Update Direct Dispatch Error:", tgErr));
+        }
+        // ---------------------------------------------------------------
+        
         return new Response(JSON.stringify(updatedObj), {
           status: 200,
           headers: { "Content-Type": "application/json" }
