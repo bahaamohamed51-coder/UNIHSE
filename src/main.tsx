@@ -120,7 +120,7 @@ if (isBrowserDirectMode) {
         try {
           const response = await originalFetch(sheetsUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           });
           if (response.ok) {
@@ -198,7 +198,7 @@ if (isBrowserDirectMode) {
         try {
           const response = await originalFetch(sheetsUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: actionType,
               id: id,
@@ -269,7 +269,7 @@ if (isBrowserDirectMode) {
         try {
           await originalFetch(sheetsUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: "setSettings",
               settings: body
@@ -324,7 +324,7 @@ if (isBrowserDirectMode) {
         try {
           await originalFetch(sheetsUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: "setBranches",
               branches: listToPush
