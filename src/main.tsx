@@ -132,11 +132,22 @@ if (isBrowserDirectMode) {
           console.error("HSE System: Sheet sync failed, logging offline in browser", err);
         }
         
-        const settings = getLocalState("offline_settings", {
-          telegramEnabled: false,
-          telegramBotToken: "",
-          telegramChatId: ""
-        });
+        let settings = getLocalState("offline_settings", null);
+        if (!settings || !settings.telegramBotToken || !settings.telegramBotToken.trim()) {
+          try {
+            const tempRes = await originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`);
+            if (tempRes.ok) {
+              const tempData = await tempRes.json();
+              if (tempData && tempData.settings) {
+                settings = tempData.settings;
+                setLocalState("offline_settings", settings);
+              }
+            }
+          } catch (_) {}
+        }
+        if (!settings) {
+          settings = { telegramEnabled: false, telegramBotToken: "", telegramChatId: "" };
+        }
         
         if (settings.telegramEnabled && settings.telegramBotToken && settings.telegramChatId) {
           let attachmentsText = "";
@@ -233,11 +244,22 @@ if (isBrowserDirectMode) {
         const updatedObj = offlineIncidents[idx] || { id, ...body };
         
         // ----------------- TELEGRAM DISPATCH ON UPDATE -----------------
-        const settings = getLocalState("offline_settings", {
-          telegramEnabled: false,
-          telegramBotToken: "",
-          telegramChatId: ""
-        });
+        let settings = getLocalState("offline_settings", null);
+        if (!settings || !settings.telegramBotToken || !settings.telegramBotToken.trim()) {
+          try {
+            const tempRes = await originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`);
+            if (tempRes.ok) {
+              const tempData = await tempRes.json();
+              if (tempData && tempData.settings) {
+                settings = tempData.settings;
+                setLocalState("offline_settings", settings);
+              }
+            }
+          } catch (_) {}
+        }
+        if (!settings) {
+          settings = { telegramEnabled: false, telegramBotToken: "", telegramChatId: "" };
+        }
         
         if (settings.telegramEnabled && settings.telegramBotToken && settings.telegramChatId) {
           const reporter = originalIncident?.employeeName || updatedObj.employeeName || "غير معروف";
@@ -427,6 +449,44 @@ if (isBrowserDirectMode) {
     
     return originalFetch(input, init);
   };
+
+  // Silent background pre-fetch for new clients to instantly cache settings & branches
+  (async () => {
+    try {
+      await new Promise(r => setTimeout(r, 800));
+      let config = { GOOGLE_SHEET_WEBAPP_URL: "" };
+      try {
+        const configRes = await originalFetch("/config.json");
+        if (configRes.ok) {
+          config = await configRes.json();
+        }
+      } catch (_) {}
+      
+      const sheetsUrl = config.GOOGLE_SHEET_WEBAPP_URL || "https://script.google.com/macros/s/AKfycbzexnanBi4l1pZ9qOBUA5hO75LNW6WFAegt0oMPTYnxxHTD6sEQRVKjx8LTLTsp61xTDw/exec";
+      
+      // Pre-fetch settings
+      originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.settings) {
+            localStorage.setItem("offline_settings", JSON.stringify(data.settings));
+          }
+        }).catch(() => {});
+
+      // Pre-fetch branches
+      originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getBranches`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && data.branches) {
+            const mapped = data.branches.map((b: any) => ({
+              name: b.name || b.Name || b[0] || "",
+              region: b.region || b.Region || b[1] || ""
+            })).filter((b: any) => b.name);
+            localStorage.setItem("offline_branches", JSON.stringify(mapped));
+          }
+        }).catch(() => {});
+    } catch (_) {}
+  })();
 }
 
 createRoot(document.getElementById('root')!).render(
