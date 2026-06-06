@@ -1,0 +1,6 @@
+{
+  "name": "UNI HSE",
+  "description": "Futuristic enterprise-grade Safety Management System (HSE Platform) with multilingual support and AI-powered corrective action suggestions.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
