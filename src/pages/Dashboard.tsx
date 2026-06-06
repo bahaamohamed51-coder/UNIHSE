@@ -52,6 +52,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "overview";
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   // Dynamic application state
   const [incidents, setIncidents] = React.useState<any[]>([]);
@@ -509,8 +510,27 @@ export default function Dashboard() {
 
 
   return (
-    <div className={cn("min-h-screen pb-12", isRTL ? "pr-64" : "pl-64")}>
-      <Sidebar />
+    <div className={cn("min-h-screen pb-12 transition-all duration-300", isRTL ? "lg:pr-64" : "lg:pl-64")}>
+      <Sidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      
+      {/* Mobile Top Header */}
+      <div className="lg:hidden flex items-center justify-between p-4 bg-[#050510]/85 border-b border-white/10 backdrop-blur-md sticky top-0 z-40">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-brand-primary/20 rounded-lg flex items-center justify-center border border-brand-primary/30 shrink-0">
+            <ShieldCheck className="w-5 h-5 text-brand-primary" />
+          </div>
+          <span className="font-extrabold text-sm tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white/90 to-brand-primary">UNI HSE</span>
+        </div>
+        
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="p-2 bg-white/5 rounded-xl border border-white/10 text-white/80 active:scale-95 transition-all"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
       
       {/* Floating alert notification */}
       <AnimatePresence>
@@ -534,7 +554,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <header className="p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <header className="p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold tracking-tight">
             {activeTab === "overview" && t.welcome}
@@ -601,7 +621,7 @@ export default function Dashboard() {
           </p>
         </div>
       ) : (
-        <main className="px-8 space-y-8">
+        <main className="px-4 sm:px-8 space-y-8">
           {activeTab === "overview" && (
             <>
               {/* Stats Grid */}
@@ -724,63 +744,113 @@ export default function Dashboard() {
                       {language === "en" ? "No incidents registered." : "لم يتم تسجيل أي بلاغات أو حوادث بعد."}
                     </div>
                   ) : (
-                    <table className="w-full">
-                      <thead>
-                        <tr className={cn("border-b border-white/10", isRTL ? "text-right" : "text-left")}>
-                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{language === "en" ? "Code" : "الرمز"}</th>
-                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.reporter}</th>
-                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.form.agency}</th>
-                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.classification}</th>
-                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.status}</th>
-                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest text-center">{t.actions}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
+                    <>
+                      {/* Desktop View Table */}
+                      <table className="w-full hidden md:table">
+                        <thead>
+                          <tr className={cn("border-b border-white/10", isRTL ? "text-right" : "text-left")}>
+                            <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{language === "en" ? "Code" : "الرمز"}</th>
+                            <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.reporter}</th>
+                            <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.form.agency}</th>
+                            <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.classification}</th>
+                            <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.status}</th>
+                            <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest text-center">{t.actions}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {filteredIncidents.slice(0, 5).map((inc) => {
+                            const isNew = !readIncidentIds.includes(inc.id);
+                            return (
+                              <tr key={inc.id} className={cn(
+                                "group hover:bg-white/[0.02] transition-colors",
+                                isNew && (isRTL ? "border-r-2 border-r-brand-primary" : "border-l-2 border-l-brand-primary")
+                              )}>
+                                <td className="py-4 font-mono text-xs font-bold text-brand-primary flex items-center gap-1.5">
+                                  <span>{inc.id}</span>
+                                  {isNew && (
+                                    <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" title="جديد" />
+                                  )}
+                                </td>
+                                <td className="py-4 font-medium text-white/90">
+                                  {inc.employeeName}
+                                </td>
+                                <td className="py-4 text-white/70 text-sm">
+                                  {inc.agency}
+                                </td>
+                                <td className="py-4">
+                                  <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[11px] font-semibold">
+                                    {t.classifications[inc.classification] || inc.classification}
+                                  </span>
+                                </td>
+                                <td className="py-4">
+                                  <div className="flex items-center gap-2">
+                                    <div className={cn("w-2 h-2 rounded-full", inc.status === "Resolved" ? "bg-green-400" : "bg-yellow-400 animate-pulse")} />
+                                    <span className={cn("text-xs font-semibold uppercase tracking-wider", inc.status === "Resolved" ? "text-green-400" : "text-yellow-400")}>
+                                      {inc.status === "Resolved" ? t.statusList.resolved : t.statusList.open}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="py-4 text-center">
+                                  <button 
+                                    onClick={() => handleViewIncident(inc)}
+                                    className="bg-brand-primary/10 border border-brand-primary/20 hover:bg-brand-primary hover:text-black hover:scale-105 text-brand-primary px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                  >
+                                    {t.view}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+
+                      {/* Mobile View Cards */}
+                      <div className="block md:hidden space-y-4">
                         {filteredIncidents.slice(0, 5).map((inc) => {
                           const isNew = !readIncidentIds.includes(inc.id);
                           return (
-                            <tr key={inc.id} className={cn(
-                              "group hover:bg-white/[0.02] transition-colors",
-                              isNew && (isRTL ? "border-r-2 border-r-brand-primary" : "border-l-2 border-l-brand-primary")
-                            )}>
-                              <td className="py-4 font-mono text-xs font-bold text-brand-primary flex items-center gap-1.5">
-                                <span>{inc.id}</span>
-                                {isNew && (
-                                  <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" title="جديد" />
-                                )}
-                              </td>
-                              <td className="py-4 font-medium text-white/90">
-                                {inc.employeeName}
-                              </td>
-                              <td className="py-4 text-white/70 text-sm">
-                                {inc.agency}
-                              </td>
-                              <td className="py-4">
-                                <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[11px] font-semibold">
-                                  {t.classifications[inc.classification] || inc.classification}
+                            <div 
+                              key={inc.id} 
+                              className={cn(
+                                "p-4 rounded-xl border border-white/10 bg-white/[0.02] flex flex-col gap-3 relative",
+                                isNew && (isRTL ? "border-r-4 border-r-brand-primary" : "border-l-4 border-l-brand-primary")
+                              )}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono text-xs font-bold text-brand-primary flex items-center gap-1.5">
+                                  #{inc.id}
+                                  {isNew && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />}
                                 </span>
-                              </td>
-                              <td className="py-4">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                   <div className={cn("w-2 h-2 rounded-full", inc.status === "Resolved" ? "bg-green-400" : "bg-yellow-400 animate-pulse")} />
-                                  <span className={cn("text-xs font-semibold uppercase tracking-wider", inc.status === "Resolved" ? "text-green-400" : "text-yellow-400")}>
+                                  <span className={cn("text-[10px] font-bold uppercase tracking-wider", inc.status === "Resolved" ? "text-green-400" : "text-yellow-400")}>
                                     {inc.status === "Resolved" ? t.statusList.resolved : t.statusList.open}
                                   </span>
                                 </div>
-                              </td>
-                              <td className="py-4 text-center">
+                              </div>
+                              
+                              <div>
+                                <p className="text-sm font-bold text-white/95">{inc.employeeName}</p>
+                                <p className="text-xs text-white/50 mt-1">{inc.agency}</p>
+                              </div>
+                              
+                              <div className="flex items-center justify-between mt-1 pt-2 border-t border-white/5">
+                                <span className="px-2.5 py-1 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[10px] font-semibold">
+                                  {t.classifications[inc.classification] || inc.classification}
+                                </span>
+                                
                                 <button 
                                   onClick={() => handleViewIncident(inc)}
-                                  className="bg-brand-primary/10 border border-brand-primary/20 hover:bg-brand-primary hover:text-black hover:scale-105 text-brand-primary px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                  className="bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
                                 >
                                   {t.view}
                                 </button>
-                              </td>
-                            </tr>
+                              </div>
+                            </div>
                           );
                         })}
-                      </tbody>
-                    </table>
+                      </div>
+                    </>
                   )}
                 </div>
               </GlassPanel>
@@ -816,23 +886,91 @@ export default function Dashboard() {
                     {language === "en" ? "No incidents matched your query" : "لم يتم العثور على أي بلاغات سلامة مطابقة لبحثك في الأرشيف"}
                   </div>
                 ) : (
-                  <table className="w-full">
-                    <thead>
-                      <tr className={cn("border-b border-white/10", isRTL ? "text-right" : "text-left")}>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{language === "en" ? "Code" : "الرمز"}</th>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.reporter}</th>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.form.agency}</th>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.classification}</th>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{language === "en" ? "Submission Date" : "تاريخ البلاغ"}</th>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.status}</th>
-                        <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest text-center">{t.actions}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
+                  <>
+                    {/* Desktop View Table */}
+                    <table className="w-full hidden md:table">
+                      <thead>
+                        <tr className={cn("border-b border-white/10", isRTL ? "text-right" : "text-left")}>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{language === "en" ? "Code" : "الرمز"}</th>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.reporter}</th>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.form.agency}</th>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.classification}</th>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{language === "en" ? "Submission Date" : "تاريخ البلاغ"}</th>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest">{t.status}</th>
+                          <th className="pb-4 font-semibold text-white/40 text-xs uppercase tracking-widest text-center">{t.actions}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {filteredIncidents.map((inc) => {
+                          const isNew = !readIncidentIds.includes(inc.id);
+                          
+                          // Human readable date formatting
+                          let readableDate = "";
+                          if (inc.timestamp) {
+                            const parsed = new Date(inc.timestamp);
+                            readableDate = parsed.toLocaleDateString(language === "ar" ? "ar-EG" : "en-US", {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            });
+                          }
+
+                          return (
+                            <tr key={inc.id} className={cn(
+                              "group hover:bg-white/[0.02] transition-colors relative",
+                              isNew ? "bg-brand-primary/[0.02]" : "transparent",
+                              isNew && (isRTL ? "border-r-4 border-r-brand-primary" : "border-l-4 border-l-brand-primary")
+                            )}>
+                              <td className="py-4 font-mono text-xs font-bold text-brand-primary">
+                                <div className="flex items-center gap-1.5">
+                                  <span>{inc.id}</span>
+                                  {isNew && (
+                                    <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md text-[10px] font-black bg-cyan-400 text-black leading-none animate-pulse shrink-0">
+                                      {language === "en" ? "NEW" : "جديد"}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-4 font-medium text-white/95">
+                                {inc.employeeName}
+                              </td>
+                              <td className="py-4 text-white/70 text-sm">
+                                {inc.agency}
+                              </td>
+                              <td className="py-4">
+                                <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[11px] font-semibold">
+                                  {t.classifications[inc.classification] || inc.classification}
+                                </span>
+                              </td>
+                              <td className="py-4 text-white/40 text-xs font-mono">
+                                {readableDate}
+                              </td>
+                              <td className="py-4">
+                                <div className="flex items-center gap-2">
+                                  <div className={cn("w-2 h-2 rounded-full", inc.status === "Resolved" ? "bg-green-400" : "bg-yellow-400 animate-pulse")} />
+                                  <span className={cn("text-xs font-semibold uppercase tracking-wider", inc.status === "Resolved" ? "text-green-400" : "text-yellow-400")}>
+                                    {inc.status === "Resolved" ? t.statusList.resolved : t.statusList.open}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-4 text-center">
+                                <button 
+                                  onClick={() => handleViewIncident(inc)}
+                                  className="bg-brand-primary/10 border border-brand-primary/20 hover:bg-brand-primary hover:text-black hover:scale-105 text-brand-primary px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                >
+                                  {t.view}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+
+                    {/* Mobile View Cards */}
+                    <div className="block md:hidden space-y-4">
                       {filteredIncidents.map((inc) => {
                         const isNew = !readIncidentIds.includes(inc.id);
-                        
-                        // Human readable date formatting
                         let readableDate = "";
                         if (inc.timestamp) {
                           const parsed = new Date(inc.timestamp);
@@ -842,58 +980,52 @@ export default function Dashboard() {
                             day: 'numeric'
                           });
                         }
-
                         return (
-                          <tr key={inc.id} className={cn(
-                            "group hover:bg-white/[0.02] transition-colors relative",
-                            isNew ? "bg-brand-primary/[0.02]" : "transparent",
-                            isNew && (isRTL ? "border-r-4 border-r-brand-primary" : "border-l-4 border-l-brand-primary")
-                          )}>
-                            <td className="py-4 font-mono text-xs font-bold text-brand-primary">
-                              <div className="flex items-center gap-1.5">
-                                <span>{inc.id}</span>
-                                {isNew && (
-                                  <span className="inline-flex items-center justify-center px-1.5 py-0.5 rounded-md text-[10px] font-black bg-cyan-400 text-black leading-none animate-pulse shrink-0">
-                                    {language === "en" ? "NEW" : "جديد"}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 font-medium text-white/90">
-                              {inc.employeeName}
-                            </td>
-                            <td className="py-4 text-white/70 text-sm">
-                              {inc.agency}
-                            </td>
-                            <td className="py-4">
-                              <span className="px-3 py-1 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[11px] font-semibold">
-                                {t.classifications[inc.classification] || inc.classification}
+                          <div 
+                            key={inc.id} 
+                            className={cn(
+                              "p-4 rounded-xl border border-white/10 bg-white/[0.02] flex flex-col gap-3 relative",
+                              isNew && (isRTL ? "border-r-4 border-r-brand-primary" : "border-l-4 border-l-brand-primary")
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-mono text-xs font-bold text-brand-primary flex items-center gap-1 bg-black/30 px-2 py-0.5 rounded border border-white/5">
+                                #{inc.id}
+                                {isNew && <span className="inline-flex items-center justify-center px-1 py-0.5 rounded text-[8px] font-black bg-cyan-400 text-black leading-none ml-1">NEW</span>}
                               </span>
-                            </td>
-                            <td className="py-4 text-white/40 text-xs font-mono">
-                              {readableDate}
-                            </td>
-                            <td className="py-4">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5">
                                 <div className={cn("w-2 h-2 rounded-full", inc.status === "Resolved" ? "bg-green-400" : "bg-yellow-400 animate-pulse")} />
-                                <span className={cn("text-xs font-semibold uppercase tracking-wider", inc.status === "Resolved" ? "text-green-400" : "text-yellow-400")}>
+                                <span className={cn("text-[10px] font-bold uppercase tracking-wider", inc.status === "Resolved" ? "text-green-400" : "text-yellow-400")}>
                                   {inc.status === "Resolved" ? t.statusList.resolved : t.statusList.open}
                                 </span>
                               </div>
-                            </td>
-                            <td className="py-4 text-center">
+                            </div>
+                            
+                            <div>
+                              <p className="text-sm font-bold text-white/95">{inc.employeeName}</p>
+                              <div className="flex items-center justify-between mt-1 text-xs text-white/50">
+                                <span>{inc.agency}</span>
+                                {readableDate && <span className="text-[10px] text-white/40 font-mono">{readableDate}</span>}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between mt-1 pt-2 border-t border-white/15">
+                              <span className="px-2.5 py-1 bg-brand-primary/10 text-brand-primary border border-brand-primary/20 rounded-full text-[10px] font-semibold">
+                                {t.classifications[inc.classification] || inc.classification}
+                              </span>
+                              
                               <button 
                                 onClick={() => handleViewIncident(inc)}
-                                className="bg-brand-primary/10 border border-brand-primary/20 hover:bg-brand-primary hover:text-black hover:scale-105 text-brand-primary px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                                className="bg-brand-primary/10 border border-brand-primary/20 text-brand-primary px-3 py-1 rounded-lg text-xs font-bold transition-all"
                               >
                                 {t.view}
                               </button>
-                            </td>
-                          </tr>
+                            </div>
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
+                    </div>
+                  </>
                 )}
               </div>
             </GlassPanel>
@@ -976,7 +1108,8 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  {/* Desktop view */}
+                  <table className="w-full hidden md:table">
                     <thead>
                       <tr className={cn("border-b border-white/10", isRTL ? "text-right" : "text-left")}>
                         <th className="pb-4 w-12 text-center">
@@ -1045,6 +1178,55 @@ export default function Dashboard() {
                       ))}
                     </tbody>
                   </table>
+
+                  {/* Mobile view */}
+                  <div className="block md:hidden space-y-4">
+                    {branches.map((b, index) => (
+                      <div 
+                        key={b.name + index} 
+                        className="p-4 rounded-xl border border-white/10 bg-white/[0.02] flex flex-col gap-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedBranchNames.includes(b.name)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedBranchNames(prev => [...prev, b.name]);
+                                } else {
+                                  setSelectedBranchNames(prev => prev.filter(name => name !== b.name));
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-white/20 bg-white/5 text-brand-primary focus:ring-brand-primary cursor-pointer accent-brand-primary"
+                            />
+                            <span className="text-sm font-bold text-white/95">{b.name}</span>
+                          </label>
+                          
+                          <span className="px-2.5 py-0.5 bg-white/5 border border-white/10 rounded-xl text-[10px] text-white/70 font-medium">
+                            {b.region}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/5">
+                          <button
+                            onClick={() => setIsEditingBranch({ index, name: b.name, region: b.region })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 text-white hover:text-brand-primary hover:border-brand-primary/20 rounded-lg text-xs"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>{language === "en" ? "Edit" : "تعديل"}</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBranch(index)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 text-white hover:text-red-400 hover:border-red-400/25 rounded-lg text-xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{language === "en" ? "Delete" : "حذف"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </GlassPanel>
