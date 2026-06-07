@@ -217,6 +217,14 @@ ${url}`).join("\n");
       }
     }
     if (settings.telegramEnabled && settings.telegramBotToken && settings.telegramChatId) {
+      const getRiskLevelText = (score) => {
+        if (score >= 46) return "Very High (\u0645\u0631\u062A\u0641\u0639 \u062C\u062F\u0627\u064B)";
+        if (score >= 30) return "High (\u0645\u0631\u062A\u0641\u0639)";
+        if (score >= 19) return "Medium Plus (\u0623\u0639\u0644\u0649 \u0645\u0646 \u0627\u0644\u0645\u062A\u0648\u0633\u0637)";
+        if (score >= 9) return "Medium (\u0645\u062A\u0648\u0633\u0637)";
+        if (score >= 4) return "Low (\u0645\u0646\u062E\u0641\u0636)";
+        return "Very Low (\u0645\u0646\u062E\u0641\u0636 \u062C\u062F\u0627\u064B)";
+      };
       const tgMsg = `\u26A0\uFE0F <b>\u0645\u0646\u0638\u0648\u0645\u0629 \u0625\u062F\u0627\u0631\u0629 \u0627\u0644\u0645\u062E\u0627\u0637\u0631 \u0648\u0633\u0644\u0627\u0645\u0629 \u0627\u0644\u0639\u0645\u0644</b> \u26A0\uFE0F
 
 <b>\u0631\u0642\u0645 \u0627\u0644\u0628\u0644\u0627\u063A:</b> ${incident.id || "\u062C\u062F\u064A\u062F"}
@@ -225,7 +233,7 @@ ${url}`).join("\n");
 <b>\u0627\u0644\u0641\u0631\u0639/\u0627\u0644\u0645\u0646\u0637\u0642\u0629:</b> ${incident.agency}
 <b>\u0627\u0644\u062A\u0635\u0646\u064A\u0641:</b> ${incident.classification || "\u062D\u0627\u062F\u062B \u0648\u0634\u064A\u0643"}
 <b>\u0627\u0644\u0648\u0635\u0641:</b> ${incident.description}
-<b>\u062F\u0631\u062C\u0629 \u0627\u0644\u062E\u0637\u0648\u0631\u0629:</b> ${incident.riskScore || 1}/25${attachmentsText}`;
+<b>\u062F\u0631\u062C\u0629 \u0627\u0644\u062E\u0637\u0648\u0631\u0629:</b> ${getRiskLevelText(incident.riskScore || 1)}${attachmentsText}`;
       const tgURL = `https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`;
       fetch(tgURL, {
         method: "POST",
