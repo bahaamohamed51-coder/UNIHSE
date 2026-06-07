@@ -220,7 +220,16 @@ function dispatchAdminNotification(incident: any) {
     }
 
     if (settings.telegramEnabled && settings.telegramBotToken && settings.telegramChatId) {
-      const tgMsg = `⚠️ <b>منظومة إدارة المخاطر وسلامة العمل</b> ⚠️\n\n<b>رقم البلاغ:</b> ${incident.id || "جديد"}\n<b>المبلغ:</b> ${incident.employeeName}\n<b>الموقع الجغرافي:</b> ${incident.incidentLocation || "غير محدد"}\n<b>الفرع/المنطقة:</b> ${incident.agency}\n<b>التصنيف:</b> ${incident.classification || "حادث وشيك"}\n<b>الوصف:</b> ${incident.description}\n<b>درجة الخطورة:</b> ${incident.riskScore || 1}/25${attachmentsText}`;
+      const getRiskLevelText = (score: number) => {
+        if (score >= 46) return "Very High (مرتفع جداً)";
+        if (score >= 30) return "High (مرتفع)";
+        if (score >= 19) return "Medium Plus (أعلى من المتوسط)";
+        if (score >= 9) return "Medium (متوسط)";
+        if (score >= 4) return "Low (منخفض)";
+        return "Very Low (منخفض جداً)";
+      };
+
+      const tgMsg = `⚠️ <b>منظومة إدارة المخاطر وسلامة العمل</b> ⚠️\n\n<b>رقم البلاغ:</b> ${incident.id || "جديد"}\n<b>المبلغ:</b> ${incident.employeeName}\n<b>الموقع الجغرافي:</b> ${incident.incidentLocation || "غير محدد"}\n<b>الفرع/المنطقة:</b> ${incident.agency}\n<b>التصنيف:</b> ${incident.classification || "حادث وشيك"}\n<b>الوصف:</b> ${incident.description}\n<b>درجة الخطورة:</b> ${getRiskLevelText(incident.riskScore || 1)}${attachmentsText}`;
 
       const tgURL = `https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`;
       fetch(tgURL, {
