@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { translations } from "../i18n/translations";
@@ -28,7 +28,8 @@ import {
   Copy,
   Send,
   Check,
-  MessageSquare
+  MessageSquare,
+  WifiOff
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn, matchIncidentId } from "../lib/utils";
@@ -45,6 +46,20 @@ export default function Login() {
   
   // High-level navigation mode
   const [viewMode, setViewMode] = useState<ActiveView>("selection");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
   
   // Credentials input for the SINGLE authorized supervisor / manager
   const [usernameInput, setUsernameInput] = useState("");
@@ -65,6 +80,10 @@ export default function Login() {
 
   const handleSearchIncident = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      setSearchError(language === "en" ? "Internet connection is required to search and edit reports." : "الاتصال بالإنترنت مطلوب للبحث عن بلاغ وتعديله.");
+      return;
+    }
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     setSearchError("");
@@ -96,6 +115,10 @@ export default function Login() {
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      alert(language === "en" ? "Cannot save edits while offline. Internet connection is required." : "لا يمكن حفظ التعديلات أثناء عدم الاتصال بالإنترنت. الاتصال بالإنترنت مطلوب.");
+      return;
+    }
     if (!searchedIncident) return;
     setIsSavingEdit(true);
     setEditSuccessMsg("");
@@ -311,6 +334,10 @@ export default function Login() {
 
   const handleSendChatMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
+    if (!isOnline) {
+      alert(language === "en" ? "Internet connection is required to chat with the AI assistant." : "الاتصال بالإنترنت مطلوب للتحدث مع مساعد الذكاء الاصطناعي.");
+      return;
+    }
     const textToSend = customText || chatInput;
     if (!textToSend.trim() || isChatSending) return;
 
@@ -368,6 +395,10 @@ export default function Login() {
   };
 
   const handleFetchAiSuggestions = async () => {
+    if (!isOnline) {
+      alert(language === "en" ? "Internet connection is required to generate AI recommendations." : "الاتصال بالإنترنت مطلوب لتوليد توصيات الذكاء الاصطناعي.");
+      return;
+    }
     if (!reportForm.description) return;
     setIsAiLoading(true);
     try {
@@ -531,6 +562,10 @@ export default function Login() {
   };
 
   const generateAiCorrective = async () => {
+    if (!isOnline) {
+      alert(language === "en" ? "Internet connection is required to generate AI recommendations." : "الاتصال بالإنترنت مطلوب لتوليد توصيات الذكاء الاصطناعي.");
+      return;
+    }
     if (!reportForm.description) return;
     setIsAiLoading(true);
     try {
@@ -555,6 +590,10 @@ export default function Login() {
 
   const handleFullReportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      alert(language === "en" ? "You are offline. Submitting new incident reports requires an active internet connection." : "أنت غير متصل بالإنترنت. إرسال بلاغات جديدة يتطلب اتصالاً نشطاً بالإنترنت.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/incidents", {
@@ -624,6 +663,16 @@ export default function Login() {
           </button>
         </div>
       </header>
+
+      {!isOnline && (
+        <div className="w-full max-w-7xl mx-auto mb-6 p-4 bg-red-400/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400">
+          <WifiOff className="w-5 h-5 shrink-0" />
+          <div className="text-xs">
+            <p className="font-bold">{language === "en" ? "Offline Mode Active" : "وضع عدم الاتصال بالإنترنت نشط"}</p>
+            <p className="opacity-80">{language === "en" ? "Submitting, searching, and editing incident reports require an active internet connection." : "خيارات الإبلاغ، البحث، وتعديل البلاغات معطّلة لعدم وجود اتصال نشط بالإنترنت."}</p>
+          </div>
+        </div>
+      )}
 
       {/* Dynamic Main Body Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto flex flex-col justify-center items-center">
