@@ -5,7 +5,6 @@ import { Sidebar } from "../components/Navigation/Sidebar";
 import { GlassPanel } from "../components/UI/GlassPanel";
 import { GlassButton } from "../components/UI/GlassButton";
 import { 
-  Camera, 
   Upload, 
   X, 
   Check, 
@@ -202,10 +201,36 @@ export default function ReportForm() {
 
   const riskScore = form.severity * form.probability;
   const getRiskLevel = (score: number) => {
-    if (score >= 12) return { label: t.priorities.critical, color: "text-red-500", bg: "bg-red-500/20" };
-    if (score >= 8) return { label: t.priorities.high, color: "text-orange-500", bg: "bg-orange-500/20" };
-    if (score >= 4) return { label: t.priorities.medium, color: "text-yellow-500", bg: "bg-yellow-500/20" };
-    return { label: t.priorities.low, color: "text-green-500", bg: "bg-green-500/20" };
+    if (score >= 46) return { 
+      label: language === "en" ? "VH → Very High (مرتفع جداً)" : "VH → مرتفع جداً (Very High)", 
+      color: "text-red-500", 
+      bg: "bg-red-500/20" 
+    };
+    if (score >= 30) return { 
+      label: language === "en" ? "H → High (مرتفع)" : "H → مرتفع (High)", 
+      color: "text-orange-500", 
+      bg: "bg-orange-500/20" 
+    };
+    if (score >= 19) return { 
+      label: language === "en" ? "M+ → Medium Plus (أعلى من المتوسط)" : "M+ → أعلى من المتوسط (Medium Plus)", 
+      color: "text-amber-500", 
+      bg: "bg-amber-500/20" 
+    };
+    if (score >= 9) return { 
+      label: language === "en" ? "M → Medium (متوسط)" : "M → متوسط (Medium)", 
+      color: "text-yellow-500", 
+      bg: "bg-yellow-500/20" 
+    };
+    if (score >= 4) return { 
+      label: language === "en" ? "L → Low (منخفض)" : "L → منخفض (Low)", 
+      color: "text-green-500", 
+      bg: "bg-green-500/20" 
+    };
+    return { 
+      label: language === "en" ? "VL → Very Low (منخفض جداً)" : "VL → منخفض جداً (Very Low)", 
+      color: "text-cyan-400", 
+      bg: "bg-cyan-400/20" 
+    };
   };
 
   const riskLevel = getRiskLevel(riskScore);
@@ -575,22 +600,14 @@ export default function ReportForm() {
                   
                   <div className="space-y-4">
                     <label className="text-sm font-medium text-white/70">{t.form.attachments}</label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div>
                       <button 
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-32 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group"
+                        className="w-full h-32 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group"
                       >
                         <Upload className="w-8 h-8 text-white/20 group-hover:text-brand-primary transition-colors" />
                         <span className="text-sm text-white/40">{t.form.uploadPrompt}</span>
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={triggerCameraMock}
-                        className="h-32 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group"
-                      >
-                        <Camera className="w-8 h-8 text-white/20 group-hover:text-brand-secondary transition-colors" />
-                        <span className="text-sm text-white/40">{t.form.camera}</span>
                       </button>
                       <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
                     </div>
@@ -624,28 +641,40 @@ export default function ReportForm() {
                       
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-xs text-white/40">{t.form.severity} (1-5)</label>
-                          <input 
-                            type="range" min="1" max="5" 
-                            value={form.severity} 
+                          <label className="text-xs text-white/40 flex justify-between">
+                            <span>{t.form.severity} (S)</span>
+                            <span className="font-bold text-brand-primary">S = {form.severity}</span>
+                          </label>
+                          <select
+                            value={form.severity}
                             onChange={(e) => setForm({...form, severity: parseInt(e.target.value)})}
-                            className="w-full accent-brand-primary" 
-                          />
-                          <div className="flex justify-between text-[10px] text-white/30">
-                            <span>Minimal</span><span>Catastrophic</span>
-                          </div>
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-brand-primary outline-none text-white font-medium cursor-pointer"
+                          >
+                            <option value={1} className="bg-[#0f0e20] text-white">{language === "en" ? "1 ➔ Delay only" : "١ ➔ تأخير فقط"}</option>
+                            <option value={2} className="bg-[#0f0e20] text-white">{language === "en" ? "2 ➔ Minor injury (FAC), minor damage" : "٢ ➔ إصابة بسيطة (FAC)، ضرر بسيط"}</option>
+                            <option value={4} className="bg-[#0f0e20] text-white">{language === "en" ? "4 ➔ LTI, disease or damage" : "٤ ➔ إصابة تستلزم وقت راحة، مرض أو ضرر"}</option>
+                            <option value={6} className="bg-[#0f0e20] text-white">{language === "en" ? "6 ➔ Major injury, disabling illness" : "٦ ➔ إصابة كبيرة، مرض معطل، ضرر كبير"}</option>
+                            <option value={8} className="bg-[#0f0e20] text-white">{language === "en" ? "8 ➔ Single Death" : "٨ ➔ وفاة واحدة"}</option>
+                            <option value={10} className="bg-[#0f0e20] text-white">{language === "en" ? "10 ➔ Multiple Deaths" : "١٠ ➔ وفيات متعددة"}</option>
+                          </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs text-white/40">{t.form.probability} (1-5)</label>
-                          <input 
-                            type="range" min="1" max="5" 
-                            value={form.probability} 
+                          <label className="text-xs text-white/40 flex justify-between">
+                            <span>{t.form.probability} (P)</span>
+                            <span className="font-bold text-brand-secondary">P = {form.probability}</span>
+                          </label>
+                          <select
+                            value={form.probability}
                             onChange={(e) => setForm({...form, probability: parseInt(e.target.value)})}
-                            className="w-full accent-brand-secondary" 
-                          />
-                          <div className="flex justify-between text-[10px] text-white/30">
-                            <span>Unlikely</span><span>Certain</span>
-                          </div>
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-brand-primary outline-none text-white font-medium cursor-pointer"
+                          >
+                            <option value={1} className="bg-[#0f0e20] text-white">{language === "en" ? "1 ➔ Very Unlikely" : "١ ➔ غير محتمل جدًا"}</option>
+                            <option value={2} className="bg-[#0f0e20] text-white">{language === "en" ? "2 ➔ Unlikely" : "٢ ➔ غير محتمل"}</option>
+                            <option value={4} className="bg-[#0f0e20] text-white">{language === "en" ? "4 ➔ May Happen" : "٤ ➔ قد يحدث"}</option>
+                            <option value={6} className="bg-[#0f0e20] text-white">{language === "en" ? "6 ➔ Likely" : "٦ ➔ محتمل"}</option>
+                            <option value={8} className="bg-[#0f0e20] text-white">{language === "en" ? "8 ➔ Very Likely" : "٨ ➔ محتمل جدًا"}</option>
+                            <option value={10} className="bg-[#0f0e20] text-white">{language === "en" ? "10 ➔ Certain or Imminent" : "١٠ ➔ مؤكد أو وشيك"}</option>
+                          </select>
                         </div>
                       </div>
                     </div>
