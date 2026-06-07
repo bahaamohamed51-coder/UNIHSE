@@ -159,7 +159,17 @@ if (isBrowserDirectMode) {
               attachmentsText = `\n\n📁 <b>الملفات المرفقة:</b> ${filesStr}`;
             }
           }
-          const tgMsg = `⚠️ <b>منظومة إدارة المخاطر وسلامة العمل</b> ⚠️\n\n<b>رقم البلاغ:</b> ${finalId}\n<b>المبلغ:</b> ${payload.ReporterName}\n<b>الموقع الجغرافي:</b> ${payload.IncidentLocation}\n<b>الفرع/المنطقة:</b> ${payload.Agency}\n<b>التصنيف:</b> ${payload.Classification}\n<b>الوصف:</b> ${payload.Description}\n<b>درجة الخطورة:</b> ${payload.RiskScore}/25${attachmentsText}`;
+          
+          const getRiskLevelText = (score: number) => {
+            if (score >= 46) return "Very High (مرتفع جداً)";
+            if (score >= 30) return "High (مرتفع)";
+            if (score >= 19) return "Medium Plus (أعلى من المتوسط)";
+            if (score >= 9) return "Medium (متوسط)";
+            if (score >= 4) return "Low (منخفض)";
+            return "Very Low (منخفض جداً)";
+          };
+          
+          const tgMsg = `⚠️ <b>منظومة إدارة المخاطر وسلامة العمل</b> ⚠️\n\n<b>رقم البلاغ:</b> ${finalId}\n<b>المبلغ:</b> ${payload.ReporterName}\n<b>الموقع الجغرافي:</b> ${payload.IncidentLocation}\n<b>الفرع/المنطقة:</b> ${payload.Agency}\n<b>التصنيف:</b> ${payload.Classification}\n<b>الوصف:</b> ${payload.Description}\n<b>درجة الخطورة:</b> ${getRiskLevelText(payload.RiskScore)}${attachmentsText}`;
           
           originalFetch(`https://api.telegram.org/bot${settings.telegramBotToken}/sendMessage`, {
             method: "POST",
