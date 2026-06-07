@@ -12,7 +12,6 @@ import {
   Sparkles, 
   Activity, 
   Upload, 
-  Camera, 
   CheckCircle2, 
   FileText, 
   AlertTriangle,
@@ -248,10 +247,42 @@ export default function Login() {
   // Dynamic risk level calculation
   const riskScore = reportForm.severity * reportForm.probability;
   const getRiskLevel = (score: number) => {
-    if (score >= 12) return { label: t.priorities.critical, color: "text-red-500", bg: "bg-red-500/20", border: "border-red-500/30" };
-    if (score >= 8) return { label: t.priorities.high, color: "text-orange-500", bg: "bg-orange-500/20", border: "border-orange-500/30" };
-    if (score >= 4) return { label: t.priorities.medium, color: "text-yellow-500", bg: "bg-yellow-500/20", border: "border-yellow-500/30" };
-    return { label: t.priorities.low, color: "text-green-500", bg: "bg-green-500/25", border: "border-green-500/30" };
+    if (score >= 46) return { 
+      label: language === "en" ? "VH → Very High (مرتفع جداً)" : "VH → مرتفع جداً (Very High)", 
+      color: "text-red-500", 
+      bg: "bg-red-500/20", 
+      border: "border-red-500/30" 
+    };
+    if (score >= 30) return { 
+      label: language === "en" ? "H → High (مرتفع)" : "H → مرتفع (High)", 
+      color: "text-orange-500", 
+      bg: "bg-orange-500/20", 
+      border: "border-orange-500/30" 
+    };
+    if (score >= 19) return { 
+      label: language === "en" ? "M+ → Medium Plus (أعلى من المتوسط)" : "M+ → أعلى من المتوسط (Medium Plus)", 
+      color: "text-amber-500", 
+      bg: "bg-amber-500/20", 
+      border: "border-amber-500/30" 
+    };
+    if (score >= 9) return { 
+      label: language === "en" ? "M → Medium (متوسط)" : "M → متوسط (Medium)", 
+      color: "text-yellow-500", 
+      bg: "bg-yellow-500/20", 
+      border: "border-yellow-500/30" 
+    };
+    if (score >= 4) return { 
+      label: language === "en" ? "L → Low (منخفض)" : "L → منخفض (Low)", 
+      color: "text-green-500", 
+      bg: "bg-green-500/25", 
+      border: "border-green-500/30" 
+    };
+    return { 
+      label: language === "en" ? "VL → Very Low (منخفض جداً)" : "VL → منخفض جداً (Very Low)", 
+      color: "text-cyan-400", 
+      bg: "bg-cyan-400/25", 
+      border: "border-cyan-400/30" 
+    };
   };
   const riskLevel = getRiskLevel(riskScore);
 
@@ -1486,23 +1517,14 @@ export default function Login() {
                           {/* Attachments Section */}
                           <div className="space-y-4">
                             <label className="text-xs font-bold uppercase tracking-wider text-white/60">{t.form.attachments}</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
                               <button 
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="h-28 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group"
+                                className="w-full h-28 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group"
                               >
                                 <Upload className="w-6 h-6 text-white/30 group-hover:text-brand-primary transition-colors" />
                                 <span className="text-xs text-white/40">{t.form.uploadPrompt}</span>
-                              </button>
-                              
-                              <button 
-                                type="button"
-                                onClick={triggerCameraMock}
-                                className="h-28 border-2 border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/5 transition-all group"
-                              >
-                                <Camera className="w-6 h-6 text-white/30 group-hover:text-brand-secondary transition-colors" />
-                                <span className="text-xs text-white/40">{language === "en" ? "Snapshot with Cam" : "التقاط من الكاميرا مباشرة"}</span>
                               </button>
                               
                               <input 
@@ -1546,16 +1568,18 @@ export default function Login() {
                                     <span>{t.form.severity}</span>
                                     <span className="font-bold text-brand-primary">{reportForm.severity}</span>
                                   </div>
-                                  <input 
-                                    type="range" min="1" max="5" 
-                                    value={reportForm.severity} 
+                                  <select
+                                    value={reportForm.severity}
                                     onChange={(e) => setReportForm({...reportForm, severity: parseInt(e.target.value)})}
-                                    className="w-full accent-brand-primary" 
-                                  />
-                                  <div className="flex justify-between text-[10px] text-white/30">
-                                    <span>{language === "en" ? "Minimal" : "أدنى حد"}</span>
-                                    <span>{language === "en" ? "Catastrophic" : "كارثي"}</span>
-                                  </div>
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-brand-primary outline-none text-white font-medium cursor-pointer"
+                                  >
+                                    <option value={1} className="bg-[#0f0e20] text-white">{language === "en" ? "1 ➔ Delay only" : "١ ➔ تأخير فقط"}</option>
+                                    <option value={2} className="bg-[#0f0e20] text-white">{language === "en" ? "2 ➔ Minor injury (FAC), minor damage" : "٢ ➔ إصابة بسيطة (FAC)، ضرر بسيط"}</option>
+                                    <option value={4} className="bg-[#0f0e20] text-white">{language === "en" ? "4 ➔ LTI, disease or damage" : "٤ ➔ إصابة تستلزم وقت راحة، مرض أو ضرر"}</option>
+                                    <option value={6} className="bg-[#0f0e20] text-white">{language === "en" ? "6 ➔ Major injury, disabling illness" : "٦ ➔ إصابة كبيرة، مرض معطل، ضرر كبير"}</option>
+                                    <option value={8} className="bg-[#0f0e20] text-white">{language === "en" ? "8 ➔ Single Death" : "٨ ➔ وفاة واحدة"}</option>
+                                    <option value={10} className="bg-[#0f0e20] text-white">{language === "en" ? "10 ➔ Multiple Deaths" : "١٠ ➔ وفيات متعددة"}</option>
+                                  </select>
                                 </div>
 
                                 <div className="space-y-2">
@@ -1563,16 +1587,18 @@ export default function Login() {
                                     <span>{t.form.probability}</span>
                                     <span className="font-bold text-brand-secondary">{reportForm.probability}</span>
                                   </div>
-                                  <input 
-                                    type="range" min="1" max="5" 
-                                    value={reportForm.probability} 
+                                  <select
+                                    value={reportForm.probability}
                                     onChange={(e) => setReportForm({...reportForm, probability: parseInt(e.target.value)})}
-                                    className="w-full accent-brand-secondary" 
-                                  />
-                                  <div className="flex justify-between text-[10px] text-white/30">
-                                    <span>{language === "en" ? "Unlikely" : "غير محتمل"}</span>
-                                    <span>{language === "en" ? "Certain" : "شبه مؤكد"}</span>
-                                  </div>
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs focus:border-brand-primary outline-none text-white font-medium cursor-pointer"
+                                  >
+                                    <option value={1} className="bg-[#0f0e20] text-white">{language === "en" ? "1 ➔ Very Unlikely" : "١ ➔ غير محتمل جدًا"}</option>
+                                    <option value={2} className="bg-[#0f0e20] text-white">{language === "en" ? "2 ➔ Unlikely" : "٢ ➔ غير محتمل"}</option>
+                                    <option value={4} className="bg-[#0f0e20] text-white">{language === "en" ? "4 ➔ May Happen" : "٤ ➔ قد يحدث"}</option>
+                                    <option value={6} className="bg-[#0f0e20] text-white">{language === "en" ? "6 ➔ Likely" : "٦ ➔ محتمل"}</option>
+                                    <option value={8} className="bg-[#0f0e20] text-white">{language === "en" ? "8 ➔ Very Likely" : "٨ ➔ محتمل جدًا"}</option>
+                                    <option value={10} className="bg-[#0f0e20] text-white">{language === "en" ? "10 ➔ Certain or Imminent" : "١٠ ➔ مؤكد أو وشيك"}</option>
+                                  </select>
                                 </div>
                               </div>
                             </div>
@@ -1650,7 +1676,7 @@ export default function Login() {
       {/* Footer copyright section */}
       <footer className="w-full max-w-7xl mx-auto border-t border-white/5 py-6 mt-12 flex flex-col md:flex-row justify-between items-center text-xs text-white/30 gap-4">
         <p>© 2026 {t.appTitle} Enterprise Co. All rights reserved.</p>
-        <p className="font-mono text-[10px] tracking-widest text-[#94a3b8]">{language === "en" ? "SYSTEM PORTAL: v2.3.4-EXPERT" : "نظام الإدارة الرقمي: ٢.٣.٤-خبير"}</p>
+        <p className="font-mono text-[10px] tracking-widest text-[#94a3b8]">{language === "en" ? "RTM-Team-Bahaa Mohamed-Tel:01095665450" : "RTM-Team-Bahaa Mohamed-Tel:01095665450"}</p>
       </footer>
     </div>
   );
