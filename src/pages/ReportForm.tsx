@@ -16,7 +16,8 @@ import {
   Loader2,
   Copy,
   Send,
-  MessageSquare
+  MessageSquare,
+  WifiOff
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
@@ -41,6 +42,20 @@ export default function ReportForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [step, setStep] = useState(1);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string>("");
   const [submittedIncidentId, setSubmittedIncidentId] = useState<string | null>(null);
@@ -68,6 +83,10 @@ export default function ReportForm() {
 
   const handleSendChatMessage = async (e?: React.FormEvent, customText?: string) => {
     if (e) e.preventDefault();
+    if (!isOnline) {
+      alert(language === "en" ? "Internet connection is required to chat with the AI assistant." : "الاتصال بالإنترنت مطلوب للتحدث مع مساعد الذكاء الاصطناعي.");
+      return;
+    }
     const textToSend = customText || chatInput;
     if (!textToSend.trim() || isChatSending) return;
 
@@ -358,6 +377,10 @@ export default function ReportForm() {
   };
 
   const handleFetchAiSuggestions = async () => {
+    if (!isOnline) {
+      alert(language === "en" ? "Internet connection is required to generate AI recommendations." : "الاتصال بالإنترنت مطلوب لتوليد توصيات الذكاء الاصطناعي.");
+      return;
+    }
     if (!form.description) return;
     setIsAiLoading(true);
     try {
@@ -404,6 +427,10 @@ export default function ReportForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      alert(language === "en" ? "You are offline. Submitting new incident reports requires an active internet connection." : "أنت غير متصل بالإنترنت. إرسال بلاغات جديدة يتطلب اتصالاً نشطاً بالإنترنت.");
+      return;
+    }
     try {
       const response = await fetch("/api/incidents", {
         method: "POST",
@@ -440,6 +467,16 @@ export default function ReportForm() {
           <span>{new Date().toLocaleString(language === 'ar' ? 'ar-EG' : 'en-US')}</span>
         </div>
       </header>
+
+      {!isOnline && (
+        <div className="mx-8 mb-6 p-4 bg-red-400/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400">
+          <WifiOff className="w-5 h-5 shrink-0" />
+          <div className="text-xs">
+            <p className="font-bold">{language === "en" ? "Offline Mode Active" : "وضع عدم الاتصال بالإنترنت نشط"}</p>
+            <p className="opacity-80">{language === "en" ? "Submitting new reports is disabled until you have an internet connection." : "عملية إرسال بلاغات جديدة معطلة حتى يتوفر لديك اتصال بالإنترنت."}</p>
+          </div>
+        </div>
+      )}
 
       <main className="px-8 max-w-4xl">
         <form onSubmit={handleSubmit} className="space-y-8">
