@@ -48,6 +48,7 @@ export const translations = {
       unsafeCondition: "Unsafe Condition",
       unsafeAct: "Unsafe Act",
       nearMiss: "Near Miss",
+      accident: "Incident / Accident",
       firstAid: "First Aid",
       lostTimeInjury: "Lost Time Injury",
       other: "Other"
@@ -123,9 +124,10 @@ export const translations = {
       uploadPrompt: "اسحب وأفلت أو انقر للتحميل"
     },
     classifications: {
-      unsafeCondition: "حالة غير آمنة",
-      unsafeAct: "فعل غير آمن",
-      nearMiss: "وشيك الوقوع",
+      unsafeCondition: "وضع غير آمن",
+      unsafeAct: "تصرف غير آمن",
+      nearMiss: "وشيك الحدوث (شبه حادث)",
+      accident: "حادث",
       firstAid: "إسعافات أولية",
       lostTimeInjury: "إصابة عمل",
       other: "أخرى"
@@ -152,7 +154,7 @@ export const translations = {
     trackIncident: "تتبع ومتابعة الحوادث",
     reportNow: "أبلغ عن حادث الآن مباشرةً",
     recentQuickReports: "البلاغات المباشرة الأخيرة",
-    quickReportSubtitle: "قم بالإبلاغ فوراً عن أي حالة أو فعل غير آمن دون الحاجة لتسجيل دخول رسمي",
+    quickReportSubtitle: "قم بالإبلاغ فوراً عن أي وضع أو تصرف غير آمن دون الحاجة لتسجيل دخول رسمي",
     loginSubtitle: "قم بتسجيل الدخول ببياناتك المعتمدة للوصول للوحة التحكم والتحليلات المتخصصة",
   }
 };
