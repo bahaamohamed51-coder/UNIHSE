@@ -27,7 +27,8 @@ import {
   AlertCircle,
   Database,
   Bell,
-  Send
+  Send,
+  WifiOff
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -48,6 +49,21 @@ import * as XLSX from "xlsx";
 
 export default function Dashboard() {
   const { language, isRTL, user } = useStore();
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   const t = translations[language];
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -133,6 +149,10 @@ export default function Dashboard() {
 
   // Save updated branches array to backend
   const saveBranchesLocal = async (updatedList: any[]) => {
+    if (!isOnline) {
+      showBranchAlert("error", language === "en" ? "Cannot save branches while offline." : "لا يمكن حفظ الفروع أثناء عدم الاتصال بالإنترنت.");
+      return;
+    }
     setIsSavingBranches(true);
     try {
       const response = await fetch("/api/branches", {
@@ -192,6 +212,13 @@ export default function Dashboard() {
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      setSettingsAlert({
+        type: "error",
+        message: language === "en" ? "Cannot save settings while offline." : "لا يمكن حفظ الإعدادات أثناء عدم الاتصال بالإنترنت."
+      });
+      return;
+    }
     setIsSavingSettings(true);
     setSettingsAlert(null);
     try {
@@ -229,6 +256,10 @@ export default function Dashboard() {
 
   // Synchronize local branches cache to Google Sheets Web App
   const handlePushBranchesToSheets = async () => {
+    if (!isOnline) {
+      showBranchAlert("error", language === "en" ? "Cannot sync with Google Sheets while offline." : "لا يمكن المزامنة مع جوجل شيت أثناء عدم الاتصال بالإنترنت.");
+      return;
+    }
     setIsSyncingBranches(true);
     try {
       const response = await fetch("/api/branches/push-sheets", {
@@ -427,6 +458,10 @@ export default function Dashboard() {
   ];
   // 1. handleToggleStatus allows changing safety incident logs real-time and syncing on sheets
   const handleToggleStatus = async (id: string, targetStatus: "Open" | "Resolved") => {
+    if (!isOnline) {
+      showBranchAlert("error", language === "en" ? "Cannot update incident status while offline." : "لا يمكن تحديث حالة البلاغ أثناء عدم الاتصال بالإنترنت.");
+      return;
+    }
     setIsUpdatingStatus(true);
     try {
       const response = await fetch(`/api/incidents/${id}`, {
@@ -553,6 +588,16 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {!isOnline && (
+        <div className="mx-4 sm:mx-8 mb-6 p-4 bg-red-400/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400">
+          <WifiOff className="w-5 h-5 shrink-0" />
+          <div className="text-xs">
+            <p className="font-bold">{language === "en" ? "Offline Mode Active" : "وضع عدم الاتصال بالإنترنت نشط"}</p>
+            <p className="opacity-80">{language === "en" ? "Data synchronization and management features are disabled until you have an active connection." : "خيارات تعديل البلاغات، إدارة الفروع، والمزامنة معلّقة لعدم اتصال الجهاز بالإنترنت."}</p>
+          </div>
+        </div>
+      )}
 
       <header className="p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
