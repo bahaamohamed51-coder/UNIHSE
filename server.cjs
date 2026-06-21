@@ -174,6 +174,23 @@ function saveLocalSettings(settings) {
     return false;
   }
 }
+async function getLatestSettings() {
+  if (SHEETS_URL) {
+    try {
+      const response = await fetchWithRedirect(`${SHEETS_URL}${SHEETS_URL.includes("?") ? "&" : "?"}action=getSettings`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.settings) {
+          saveLocalSettings(data.settings);
+          return data.settings;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to dynamically refresh settings from Sheets:", err);
+    }
+  }
+  return getLocalSettings();
+}
 function getNotificationLogs() {
   try {
     if (import_fs.default.existsSync(NOTIFICATIONS_FILE)) {
@@ -184,9 +201,9 @@ function getNotificationLogs() {
   }
   return [];
 }
-function dispatchAdminNotification(incident) {
+async function dispatchAdminNotification(incident) {
   try {
-    const settings = getLocalSettings();
+    const settings = await getLatestSettings();
     if (!settings) return;
     let logs = getNotificationLogs();
     let attachmentsText = "";
@@ -265,9 +282,9 @@ ${url}`).join("\n");
     console.error("Failed dispatching admin notification log", err);
   }
 }
-function dispatchAdminUpdateNotification(incidentId, updatedFields) {
+async function dispatchAdminUpdateNotification(incidentId, updatedFields) {
   try {
-    const settings = getLocalSettings();
+    const settings = await getLatestSettings();
     if (!settings) return;
     let logs = getNotificationLogs();
     const existing = localIncidents.find((inc) => inc.id === incidentId);
