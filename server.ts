@@ -181,6 +181,25 @@ function saveLocalSettings(settings: any) {
   }
 }
 
+// Dynamically retrieve the absolute latest settings from Sheets to avoid needing application update
+async function getLatestSettings() {
+  if (SHEETS_URL) {
+    try {
+      const response = await fetchWithRedirect(`${SHEETS_URL}${SHEETS_URL.includes("?") ? "&" : "?"}action=getSettings`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.settings) {
+          saveLocalSettings(data.settings);
+          return data.settings;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to dynamically refresh settings from Sheets:", err);
+    }
+  }
+  return getLocalSettings();
+}
+
 // Loader for notification logs
 function getNotificationLogs() {
   try {
@@ -194,9 +213,9 @@ function getNotificationLogs() {
 }
 
 // Dispatch notification and write to log
-function dispatchAdminNotification(incident: any) {
+async function dispatchAdminNotification(incident: any) {
   try {
-    const settings = getLocalSettings();
+    const settings = await getLatestSettings();
     if (!settings) return;
     
     let logs = getNotificationLogs();
@@ -268,9 +287,9 @@ function dispatchAdminNotification(incident: any) {
 }
 
 // Dispatch Telegram update notification when an incident is modified/updated
-function dispatchAdminUpdateNotification(incidentId: string, updatedFields: { status?: string, correctiveAction?: string, files?: any[], dataFiles?: string, prevStatus?: string }) {
+async function dispatchAdminUpdateNotification(incidentId: string, updatedFields: { status?: string, correctiveAction?: string, files?: any[], dataFiles?: string, prevStatus?: string }) {
   try {
-    const settings = getLocalSettings();
+    const settings = await getLatestSettings();
     if (!settings) return;
     
     let logs = getNotificationLogs();
