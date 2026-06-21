@@ -132,18 +132,19 @@ if (isBrowserDirectMode) {
           console.error("HSE System: Sheet sync failed, logging offline in browser", err);
         }
         
-        let settings = getLocalState("offline_settings", null);
-        if (!settings || !settings.telegramBotToken || !settings.telegramBotToken.trim()) {
-          try {
-            const tempRes = await originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`);
-            if (tempRes.ok) {
-              const tempData = await tempRes.json();
-              if (tempData && tempData.settings) {
-                settings = tempData.settings;
-                setLocalState("offline_settings", settings);
-              }
+        let settings = null;
+        try {
+          const tempRes = await originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`);
+          if (tempRes.ok) {
+            const tempData = await tempRes.json();
+            if (tempData && tempData.settings) {
+              settings = tempData.settings;
+              setLocalState("offline_settings", settings);
             }
-          } catch (_) {}
+          }
+        } catch (_) {}
+        if (!settings) {
+          settings = getLocalState("offline_settings", null);
         }
         if (!settings) {
           settings = { telegramEnabled: false, telegramBotToken: "", telegramChatId: "" };
@@ -254,18 +255,19 @@ if (isBrowserDirectMode) {
         const updatedObj = offlineIncidents[idx] || { id, ...body };
         
         // ----------------- TELEGRAM DISPATCH ON UPDATE -----------------
-        let settings = getLocalState("offline_settings", null);
-        if (!settings || !settings.telegramBotToken || !settings.telegramBotToken.trim()) {
-          try {
-            const tempRes = await originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`);
-            if (tempRes.ok) {
-              const tempData = await tempRes.json();
-              if (tempData && tempData.settings) {
-                settings = tempData.settings;
-                setLocalState("offline_settings", settings);
-              }
+        let settings = null;
+        try {
+          const tempRes = await originalFetch(`${sheetsUrl}${sheetsUrl.includes("?") ? "&" : "?"}action=getSettings`);
+          if (tempRes.ok) {
+            const tempData = await tempRes.json();
+            if (tempData && tempData.settings) {
+              settings = tempData.settings;
+              setLocalState("offline_settings", settings);
             }
-          } catch (_) {}
+          }
+        } catch (_) {}
+        if (!settings) {
+          settings = getLocalState("offline_settings", null);
         }
         if (!settings) {
           settings = { telegramEnabled: false, telegramBotToken: "", telegramChatId: "" };
